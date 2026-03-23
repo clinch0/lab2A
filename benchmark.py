@@ -44,34 +44,22 @@ class MapBasedSolver:
         self.x_coords = sorted(x_set)
         self.y_coords = sorted(y_set)
         
-        x_map = {x: i for i, x in enumerate(self.x_coords)}
-        y_map = {y: i for i, y in enumerate(self.y_coords)}
-        
         nx = len(self.x_coords)
         ny = len(self.y_coords)
         
-        diff = [[0] * (ny + 1) for _ in range(nx + 1)]
-        
-        for x1, y1, x2, y2 in self.rectangles:
-            x1_idx = x_map[x1]
-            y1_idx = y_map[y1]
-            x2_idx = x_map[x2]
-            y2_idx = y_map[y2]
-            
-            diff[x1_idx][y1_idx] += 1
-            diff[x2_idx][y1_idx] -= 1
-            diff[x1_idx][y2_idx] -= 1
-            diff[x2_idx][y2_idx] += 1
-        
         self.grid = [[0] * (ny + 1) for _ in range(nx + 1)]
-        for i in range(nx):
-            for j in range(ny):
-                self.grid[i + 1][j + 1] = (
-                    self.grid[i][j + 1] + 
-                    self.grid[i + 1][j] - 
-                    self.grid[i][j] + 
-                    diff[i][j]
-                )
+        
+        for i in range(1, nx + 1):
+            for j in range(1, ny + 1):
+                x_cell = self.x_coords[i - 1]
+                y_cell = self.y_coords[j - 1]
+                
+                count = 0
+                for x1, y1, x2, y2 in self.rectangles:
+                    if x1 <= x_cell < x2 and y1 <= y_cell < y2:
+                        count += 1
+                
+                self.grid[i][j] = count
     
     def query(self, x: int, y: int) -> int:
         if self.grid is None:
@@ -304,7 +292,7 @@ def run_benchmarks():
         })
         print(f"  BruteForce: prep={t1-t0:.4f}s, query={t2-t1:.4f}s")
         
-        if n_rects <= 4000:
+        if n_rects <= 1000:
             mb = MapBasedSolver(rectangles)
             t0 = time.perf_counter()
             mb.prepare()
